@@ -23,7 +23,7 @@ use crate::{data_model::{CanisterUpgradeStatus, UpgradeCanisterArg}, CANISTER_DA
 
 
 #[update]
-pub async fn upgrade_canister(upgrade_arg: UpgradeCanisterArg) -> Result<String, String> {
+pub async fn upgrade_canisters_in_network(upgrade_arg: UpgradeCanisterArg) -> Result<String, String> {
     
     if !is_controller(&caller()) {
         return Err("Unauthorized".to_string());

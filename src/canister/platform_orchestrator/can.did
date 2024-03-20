@@ -14,6 +14,18 @@ type HttpResponse = record {
   headers : vec record { text; text };
   status_code : nat16;
 };
+type PlatformOrchestratorGenericArgumentType = variant {
+  UpgradeSubnetCanisters : UpgradeCanisterArg;
+  RemoveSubnetOrchestratorFromAvailableList : principal;
+  ProvisionSubnetOrchestrator : principal;
+  UploadWasm : record { WasmType; vec nat8 };
+};
+type PlatformOrchestratorGenericResultType = variant {
+  UpgradeSubnetCanisters : Result;
+  ProvisionSubnetOrchestrator : Result_1;
+  RemoveSubnetOrchestratorFromAvailableListResult : Result;
+  UploadWasm : Result;
+};
 type PlatformOrchestratorInitArgs = record { version : text };
 type Result = variant { Ok : text; Err : text };
 type Result_1 = variant { Ok : principal; Err : text };
@@ -34,6 +46,9 @@ service : (PlatformOrchestratorInitArgs) -> {
   get_subnet_last_upgrade_status : () -> (CanisterUpgradeStatus) query;
   get_version : () -> (text) query;
   http_request : (HttpRequest) -> (HttpResponse) query;
+  platform_orchestrator_generic_function : (
+      PlatformOrchestratorGenericArgumentType,
+    ) -> (PlatformOrchestratorGenericResultType);
   provision_subnet_orchestrator_canister : (principal) -> (Result_1);
   remove_subnet_orchestrators_from_available_list : (principal) -> (Result);
   start_reclaiming_cycles_from_individual_canisters : () -> (Result);
@@ -41,7 +56,10 @@ service : (PlatformOrchestratorInitArgs) -> {
   stop_upgrades_for_individual_user_canisters : () -> (Result);
   subnet_orchestrator_maxed_out : () -> ();
   update_profile_owner_for_individual_canisters : () -> ();
-  upgrade_canister : (UpgradeCanisterArg) -> (Result);
+  upgrade_canisters_in_network : (UpgradeCanisterArg) -> (Result);
   upgrade_specific_individual_canister : (principal) -> ();
   upload_wasms : (WasmType, vec nat8) -> (Result);
+  validate_platform_orchestrator_generic_function : (
+      PlatformOrchestratorGenericArgumentType,
+    ) -> ();
 }

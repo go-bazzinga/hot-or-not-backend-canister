@@ -6,7 +6,7 @@ use crate::CANISTER_DATA;
 
  
 #[update]
-pub async fn upload_wasms(wasm_type: WasmType, wasm: Vec<u8>) -> Result<String, String> {
+pub fn upload_wasms(wasm_type: WasmType, wasm: Vec<u8>) -> Result<String, String> {
     if !is_controller(&caller()) {
         return Err("Unauthorized".into())
     }
