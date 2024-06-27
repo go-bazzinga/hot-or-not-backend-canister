@@ -6,11 +6,11 @@ type CanisterUpgradeStatus = record {
 type HttpRequest = record {
   url : text;
   method : text;
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
 };
 type HttpResponse = record {
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
   status_code : nat16;
 };
@@ -32,7 +32,7 @@ type PlatformOrchestratorGenericArgumentType = variant {
   UpgradeSubnetCanisters : UpgradeCanisterArg;
   RemoveSubnetOrchestratorFromAvailableList : principal;
   ProvisionSubnetOrchestrator : principal;
-  UploadWasm : record { WasmType; vec nat8 };
+  UploadWasm : record { WasmType; blob };
 };
 type PlatformOrchestratorGenericResultType = variant {
   UpgradeSubnetCanisters : Result;
@@ -47,7 +47,7 @@ type Result_2 = variant { Ok; Err : text };
 type UpgradeCanisterArg = record {
   version : text;
   canister : WasmType;
-  wasm_blob : vec nat8;
+  wasm_blob : blob;
 };
 type WasmType = variant {
   IndividualUserWasm;
@@ -90,7 +90,7 @@ service : (PlatformOrchestratorInitArgs) -> {
     ) -> (Result);
   upgrade_canisters_in_network : (UpgradeCanisterArg) -> (Result);
   upgrade_specific_individual_canister : (principal) -> ();
-  upload_wasms : (WasmType, vec nat8) -> (Result);
+  upload_wasms : (WasmType, blob) -> (Result);
   validate_platform_orchestrator_generic_function : (
       PlatformOrchestratorGenericArgumentType,
     ) -> (Result);

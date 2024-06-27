@@ -1,11 +1,11 @@
 type HttpRequest = record {
   url : text;
   method : text;
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
 };
 type HttpResponse = record {
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
   status_code : nat16;
 };
@@ -75,6 +75,13 @@ service : (PostCacheInitArgs) -> {
       opt PostStatus,
       opt NsfwFilter,
     ) -> (Result) query;
+  get_top_posts_aggregated_from_canisters_on_this_network_for_yral_feed_cursor : (
+      nat64,
+      nat64,
+      opt bool,
+      opt PostStatus,
+      opt NsfwFilter,
+    ) -> (Result) query;
   get_well_known_principal_value : (KnownPrincipalType) -> (
       opt principal,
     ) query;
@@ -85,7 +92,11 @@ service : (PostCacheInitArgs) -> {
   receive_top_hot_or_not_feed_posts_from_publishing_canister : (
       vec PostScoreIndexItemV1,
     ) -> ();
+  receive_top_yral_feed_posts_from_publishing_canister : (
+      vec PostScoreIndexItemV1,
+    ) -> ();
   remove_all_feed_entries : () -> ();
   update_post_home_feed : (PostScoreIndexItemV1) -> ();
   update_post_hot_or_not_feed : (PostScoreIndexItemV1) -> ();
+  update_post_yral_feed : (PostScoreIndexItemV1) -> ();
 }

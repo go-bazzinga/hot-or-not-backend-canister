@@ -15,7 +15,7 @@ type CanisterStatusResponse = record {
   settings : DefiniteCanisterSettings;
   query_stats : QueryStats;
   idle_cycles_burned_per_day : nat;
-  module_hash : opt vec nat8;
+  module_hash : opt blob;
 };
 type CanisterStatusType = variant { stopped; stopping; running };
 type DefiniteCanisterSettings = record {
@@ -27,11 +27,11 @@ type DefiniteCanisterSettings = record {
 type HttpRequest = record {
   url : text;
   method : text;
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
 };
 type HttpResponse = record {
-  body : vec nat8;
+  body : blob;
   headers : vec record { text; text };
   status_code : nat16;
 };
@@ -108,9 +108,7 @@ type UserIndexInitArgs = record {
 service : (UserIndexInitArgs) -> {
   are_signups_enabled : () -> (bool) query;
   backup_all_individual_user_canisters : () -> ();
-  create_pool_of_individual_user_available_canisters : (text, vec nat8) -> (
-      Result,
-    );
+  create_pool_of_individual_user_available_canisters : (text, blob) -> (Result);
   get_current_list_of_all_well_known_principal_values : () -> (
       vec record { KnownPrincipalType; principal },
     ) query;
@@ -151,7 +149,7 @@ service : (UserIndexInitArgs) -> {
   reset_user_individual_canisters : (vec principal) -> (Result);
   return_cycles_to_platform_orchestrator_canister : () -> (Result);
   set_permission_to_upgrade_individual_canisters : (bool) -> (text);
-  start_upgrades_for_individual_canisters : (text, vec nat8) -> (text);
+  start_upgrades_for_individual_canisters : (text, blob) -> (text);
   toggle_signups_enabled : () -> (Result_2);
   update_canisters_last_functionality_access_time : () -> (text);
   update_index_with_unique_user_name_corresponding_to_user_principal_id : (
