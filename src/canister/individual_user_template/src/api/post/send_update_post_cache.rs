@@ -37,11 +37,18 @@ pub fn send_update_post_cache(post_id: &u64) {
     });
 
     if home_feed_index_score_item.is_some() {
+        let home_feed_index_score_clone = home_feed_index_score_item.clone();
         let _ = call::notify(
             post_cache_canister_principal_id,
             "update_post_home_feed",
+            (home_feed_index_score_clone.unwrap(),),
+        );
+        let _ = call::notify(
+            post_cache_canister_principal_id,
+            "update_post_yral_feed",
             (home_feed_index_score_item.unwrap(),),
         );
+
     }
 
     if hot_or_not_index_score_item.is_some() {
