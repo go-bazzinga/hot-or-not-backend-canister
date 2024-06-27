@@ -5,12 +5,12 @@ https://www.figma.com/design/7vWG0OUW3BXAxbRIXa36UV/HotorNot-Brainstorming?node-
 ### What are the deprecation from Old Feed (home / Hot-or-Not) ?
 
 - separate Hot-or-Not feed is deprecated.
-- can bet on Hot-or-Not feed 
+- earlier, user could bet on Hot-or-Not feed. Now that is gone.
 
 ### What are the new features in new Yral Feed ?
 
 - Two feeds get merged into one
-- Can bet on one common feed
+- now, user Can bet on one common feed. (called yral_feed)
 
 ### As a User, changes in new Yral feed. (design changes)
 
