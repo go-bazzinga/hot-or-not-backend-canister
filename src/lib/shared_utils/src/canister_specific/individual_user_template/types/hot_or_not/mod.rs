@@ -10,17 +10,17 @@ use serde::Serialize;
 use crate::common::types::{
     app_primitive_type::PostId,
     utility_token::token_event::{
-        HotOrNotOutcomePayoutEvent, TokenEvent, HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE,
-        HOT_OR_NOT_BET_WINNINGS_MULTIPLIER,
+        HotOrNotOutcomePayoutEvent, HotOrNotOutcomePayoutEventV1, NewSlotType, TokenEvent, TokenEventV1, HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE, HOT_OR_NOT_BET_WINNINGS_MULTIPLIER
     },
 };
 
 use super::{
     error::BetOnCurrentlyViewingPostError,
     post::{FeedScore, Post},
-    token::TokenBalance,
+    token::{TokenBalance, TokenBalanceV1},
 };
 
+#[deprecated(note = "use `BettingStatusV1` instead")]
 #[derive(CandidType, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum BettingStatus {
     BettingOpen {
@@ -31,6 +31,60 @@ pub enum BettingStatus {
         has_this_user_participated_in_this_post: Option<bool>,
     },
     BettingClosed,
+}
+
+#[derive(CandidType, PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+pub enum BettingStatusV1 {
+    BettingOpen {
+        started_at: SystemTime,
+        number_of_participants: u8,
+        ongoing_slot: NewSlotType,
+        ongoing_room: u64,
+        has_this_user_participated_in_this_post: Option<bool>,
+    },
+    BettingClosed,
+}
+
+impl From<BettingStatus> for BettingStatusV1 {
+    fn from(status: BettingStatus) -> Self {
+        match status {
+            BettingStatus::BettingOpen {
+                started_at,
+                number_of_participants,
+                ongoing_slot,
+                ongoing_room,
+                has_this_user_participated_in_this_post,
+            } => BettingStatusV1::BettingOpen {
+                started_at,
+                number_of_participants,
+                ongoing_slot: ongoing_slot.into(), // Assuming you have a way to convert u8 to NewSlotType
+                ongoing_room,
+                has_this_user_participated_in_this_post,
+            },
+            BettingStatus::BettingClosed => BettingStatusV1::BettingClosed,
+        }
+    }
+}
+
+impl From<BettingStatusV1> for BettingStatus {
+    fn from(status: BettingStatusV1) -> Self {
+        match status {
+            BettingStatusV1::BettingOpen {
+                started_at,
+                number_of_participants,
+                ongoing_slot,
+                ongoing_room,
+                has_this_user_participated_in_this_post,
+            } => BettingStatus::BettingOpen {
+                started_at,
+                number_of_participants,
+                ongoing_slot: ongoing_slot.into(), // Assuming you have a way to convert NewSlotType to u8
+                ongoing_room,
+                has_this_user_participated_in_this_post,
+            },
+            BettingStatusV1::BettingClosed => BettingStatus::BettingClosed,
+        }
+    }
 }
 
 pub const MAXIMUM_NUMBER_OF_SLOTS: u8 = 48;
@@ -209,6 +263,7 @@ impl Storable for StablePrincipal {
 
 pub type BetMakerPrincipal = StablePrincipal;
 
+#[deprecated(note = "use GlobalBetIdV1 instead")]
 #[derive(
     CandidType,
     Clone,
@@ -241,6 +296,47 @@ impl Storable for GlobalRoomId {
 }
 
 #[derive(
+    CandidType,
+    Clone,
+    Deserialize,
+    Debug,
+    Serialize,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Default,
+    Copy,
+    Hash,
+)]
+pub struct GlobalRoomIdV1(pub PostId, pub NewSlotType, pub RoomId);
+
+impl Storable for GlobalRoomIdV1 {
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        // let mut bytes = vec![];
+        // ciborium::ser::into_writer(self, &mut bytes).unwrap();
+        
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 50,
+        is_fixed_size: false,
+    };
+}
+
+impl From<GlobalRoomId> for GlobalRoomIdV1 {
+    fn from(v1: GlobalRoomId) -> Self {
+        GlobalRoomIdV1(v1.0, v1.1.into(), v1.2)
+    }
+}
+
+#[deprecated(note = "use GlobalBetIdV1 instead")]
+#[derive(
     CandidType, Clone, Deserialize, Debug, Serialize, Ord, PartialOrd, Eq, PartialEq, Default,
 )]
 pub struct GlobalBetId(pub GlobalRoomId, pub BetMakerPrincipal);
@@ -260,6 +356,35 @@ impl Storable for GlobalBetId {
     };
 }
 
+#[derive(
+    CandidType, Clone, Deserialize, Debug, Serialize, Ord, PartialOrd, Eq, PartialEq, Default,
+)]
+pub struct GlobalBetIdV1(pub GlobalRoomIdV1, pub BetMakerPrincipal);
+
+impl Storable for GlobalBetIdV1 {
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: 100,
+        is_fixed_size: false,
+    };
+}
+
+impl From<GlobalBetId> for GlobalBetIdV1 {
+    fn from(global_bet_id: GlobalBetId) -> Self {
+        GlobalBetIdV1(
+            global_bet_id.0.into(), // Assuming you have a way to convert GlobalRoomId to GlobalRoomIdV1
+            global_bet_id.1,
+        )
+    }
+}
+
 #[derive(Clone, Deserialize, Debug, CandidType, Serialize, Default)]
 pub enum BetPayout {
     #[default]
@@ -276,6 +401,7 @@ pub enum RoomBetPossibleOutcomes {
     Draw,
 }
 
+#[deprecated(note = "use `PlacedBetDetailV1` instead")]
 #[derive(Deserialize, Serialize, Clone, CandidType, Debug, PartialEq, Eq)]
 pub struct PlacedBetDetail {
     pub canister_id: CanisterId,
@@ -286,6 +412,33 @@ pub struct PlacedBetDetail {
     pub bet_direction: BetDirection,
     pub bet_placed_at: SystemTime,
     pub outcome_received: BetOutcomeForBetMaker,
+}
+
+#[derive(Deserialize, Serialize, Clone, CandidType, Debug, PartialEq, Eq)]
+pub struct PlacedBetDetailV1 {
+    pub canister_id: CanisterId,
+    pub post_id: PostId,
+    pub slot_id: NewSlotType,
+    pub room_id: RoomId,
+    pub amount_bet: u64,
+    pub bet_direction: BetDirection,
+    pub bet_placed_at: SystemTime,
+    pub outcome_received: BetOutcomeForBetMaker,
+}
+
+impl From<PlacedBetDetail> for PlacedBetDetailV1 {
+    fn from(detail: PlacedBetDetail) -> Self {
+        PlacedBetDetailV1 {
+            canister_id: detail.canister_id,
+            post_id: detail.post_id,
+            slot_id: detail.slot_id.into(),
+            room_id: detail.room_id,
+            amount_bet: detail.amount_bet,
+            bet_direction: detail.bet_direction,
+            bet_placed_at: detail.bet_placed_at,
+            outcome_received: detail.outcome_received,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Default, CandidType, PartialEq, Eq, Clone, Debug)]

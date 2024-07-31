@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-
+use std::time::Duration;
 use crate::common::types::known_principal::{KnownPrincipalMap, KnownPrincipalType};
 use candid::Principal;
 pub const INDIVIDUAL_USER_CANISTER_RECHARGE_AMOUNT: u128 = 200_000_000_000; // 0.2T Cycles
@@ -40,6 +40,8 @@ pub const ASSUMED_NUMBER_OF_INSTRUCTIONS_PER_INGRESS_CALL: u128 = 500_000; //0.5
 pub const RESERVED_NUMBER_OF_INSTRUCTIONS_FOR_INSTALL_CODE: u128 = 200_000_000_000; //200B instructions
 pub const THRESHOLD_NUMBER_OF_DAYS_TO_KEEP_CANISTER_RUNNING: u128 = 1;
 pub const MAX_NUMBER_OF_DAYS_TO_KEEP_CANISTER_RUNNING: u128 = 3;
+
+pub const TIMER_DURATION: Duration = Duration::from_secs(60 * 60); // 60 minutes
 
 pub fn get_backup_individual_user_canister_batch_size() -> u64 {
     match option_env!("DFX_NETWORK") {
