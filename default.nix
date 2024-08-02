@@ -8,14 +8,45 @@ in
 dfx-env.overrideAttrs (old: {
   nativeBuildInputs = with pkgs; old.nativeBuildInputs ++
     [
-      rustup pkg-config openssl protobuf cmake cachix killall jq coreutils bc python3Full
+      cargo
+      rustc
+      pkg-config
+      openssl
+      protobuf
+      cmake
+      cachix
+      killall
+      jq
+      coreutils
+      bc
+      python3Full
     ] ++ (if pkgs.stdenv.isDarwin then [
       darwin.apple_sdk.frameworks.Foundation
       pkgs.darwin.libiconv
     ] else []);
-    shellHook = ''
-      cargo install --root $out --force candid-extractor
-      ln -s $out/bin/candid-extractor $out/bin/candid-extractor
-      export PATH="$out/bin:$PATH"
-    '';
+  shellHook = ''
+    # Store the original PATH
+    export ORIGINAL_PATH="$PATH"
+
+    # Remove .cargo/bin from PATH
+    export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v "$HOME/.cargo/bin" | tr '\n' ':' | sed 's/:$//')
+
+    # Ensure Nix-provided cargo and rustc are first in PATH
+    export PATH="${pkgs.cargo}/bin:${pkgs.rustc}/bin:$PATH"
+
+    # Install candid-extractor if not already in Nix environment
+    if ! command -v candid-extractor &> /dev/null; then
+      echo "Installing candid-extractor..."
+      cargo install --force candid-extractor
+    fi
+
+    # Function to clean up on exit
+    cleanup() {
+      # Restore the original PATH
+      export PATH="$ORIGINAL_PATH"
+    }
+
+    # Set up trap to call cleanup function on exit
+    trap cleanup EXIT
+  '';
 })
