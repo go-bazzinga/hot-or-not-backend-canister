@@ -17,7 +17,7 @@ use shared_utils::{
             GetPostsOfUserProfileError,
         },
         follow::{FollowEntryDetail, FollowEntryId},
-        hot_or_not::{BetOutcomeForBetMaker, BettingStatus, PlacedBetDetail},
+        hot_or_not::{BetOutcomeForBetMaker, BettingStatus,BettingStatusV1, PlacedBetDetail, PlacedBetDetailV1},
         kv_storage::{NamespaceErrors, NamespaceForFrontend},
         migration::MigrationErrors,
         ml_data::{SuccessHistoryItemV1, WatchHistoryItem},
@@ -41,6 +41,8 @@ use shared_utils::{
         GetUserUtilityTokenTransactionHistoryError, UpdateProfileSetUniqueUsernameError,
     },
 };
+use shared_utils::canister_specific::individual_user_template::types::post::PostDetailsForFrontendV1;
+use shared_utils::common::types::utility_token::token_event::TokenEventV1;
 
 mod api;
 pub mod data_model;

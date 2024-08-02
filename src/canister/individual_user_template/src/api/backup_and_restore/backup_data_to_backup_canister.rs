@@ -76,7 +76,7 @@ async fn backup_data_to_backup_canister(
     )
     .await;
     send_all_created_posts(&data_backup_canister_id, &canister_owner_principal_id).await;
-    send_all_token_data(&data_backup_canister_id, &canister_owner_principal_id).await;
+    send_all_token_data_v1(&data_backup_canister_id, &canister_owner_principal_id).await;
     send_all_follower_following_data(&data_backup_canister_id, &canister_owner_principal_id).await;
 }
 
@@ -125,12 +125,50 @@ async fn send_all_created_posts(
     }
 }
 
+#[deprecated(note = "use send_all_token_data_v1 instead")]
 async fn send_all_token_data(
     data_backup_canister_id: &Principal,
     canister_owner_principal_id: &Principal,
 ) {
     let token_data = CANISTER_DATA
         .with(|canister_data_ref_cell| canister_data_ref_cell.borrow().my_token_balance.clone());
+
+    let _: () = call::call(
+            *data_backup_canister_id,
+            "receive_current_token_balance_from_individual_user_canister",
+            (token_data.utility_token_balance, *canister_owner_principal_id),
+        )
+        .await
+        .expect("Failed to call the receive_current_token_balance_from_individual_user_canister method on the data_backup canister");
+
+    let all_token_transactions = token_data
+        .utility_token_transaction_history
+        .iter()
+        .map(|(token_transaction_id, token_event)| (*token_transaction_id, (*token_event).clone()))
+        .collect::<Vec<_>>();
+
+    let all_token_transactions_chunks = all_token_transactions
+        .chunks(CHUNK_SIZE)
+        .collect::<Vec<_>>();
+
+    for chunk in all_token_transactions_chunks {
+        let _: () = call::call(
+            *data_backup_canister_id,
+            "receive_all_token_transactions_from_individual_user_canister",
+            (chunk.to_vec(), *canister_owner_principal_id),
+        )
+        .await
+        .expect("Failed to call the receive_all_token_transactions_from_individual_user_canister method on the data_backup canister");
+    }
+}
+
+
+async fn send_all_token_data_v1(
+    data_backup_canister_id: &Principal,
+    canister_owner_principal_id: &Principal,
+) {
+    let token_data = CANISTER_DATA
+        .with(|canister_data_ref_cell| canister_data_ref_cell.borrow().my_token_balance_v1.clone());
 
     let _: () = call::call(
             *data_backup_canister_id,

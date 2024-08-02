@@ -58,6 +58,7 @@ type KnownPrincipalType = variant {
   CanisterIdUserIndex;
   CanisterIdPlatformOrchestrator;
   CanisterIdConfiguration;
+  CanisterIdHotOrNotSubnetOrchestrator;
   CanisterIdProjectMemberIndex;
   CanisterIdTopicCacheIndex;
   CanisterIdRootCanister;
@@ -159,16 +160,16 @@ type UserAccessRole = variant {
   CanisterAdmin;
   ProjectCanister;
 };
+type UserCanisterDetails = record {
+  user_canister_id : principal;
+  profile_owner : principal;
+};
 type UserOwnedCanisterData = record {
   principals_i_follow : vec principal;
   token_data : TokenBalance;
   all_created_posts : vec record { nat64; Post };
   profile : UserProfile;
   principals_that_follow_me : vec principal;
-};
-type UserCanisterDetails = record {
-  user_canister_id : principal;
-  profile_owner : principal;
 };
 type UserProfile = record {
   unique_user_name : opt text;
@@ -183,6 +184,7 @@ type UserProfileGlobalStats = record {
   not_bets_received : nat64;
 };
 service : (DataBackupInitArgs) -> {
+  __get_candid_interface_tmp_hack : () -> (text) query;
   get_current_backup_statistics : () -> (BackupStatistics) query;
   get_individual_users_backup_data_entry : (principal) -> (
       opt AllUserData,

@@ -41,8 +41,8 @@ async fn restore_backed_up_data_to_individual_users_canister(
     let users_data = users_data.unwrap();
 
     send_posts(&users_data).await;
-    send_utility_token_balance(&users_data).await;
-    send_utility_token_history(&users_data).await;
+    send_utility_token_balance_v1(&users_data).await;
+    send_utility_token_history_v1(&users_data).await;
     send_principals_i_follow(&users_data).await;
     send_principals_that_follow_me(&users_data).await;
     send_profile_data(&users_data).await;
@@ -114,6 +114,7 @@ async fn send_principals_i_follow(users_data: &AllUserData) {
     }
 }
 
+#[deprecated(note = "use send_utility_token_balance_v1 instead")]
 async fn send_utility_token_history(users_data: &AllUserData) {
     let canister_id_to_send_to = users_data.user_canister_id;
 
@@ -140,6 +141,35 @@ async fn send_utility_token_history(users_data: &AllUserData) {
     }
 }
 
+
+async fn send_utility_token_history_v1(users_data: &AllUserData) {
+    let canister_id_to_send_to = users_data.user_canister_id;
+
+    let all_utility_token_transactions_vec = users_data
+        .canister_data
+        .token_data
+        .utility_token_transaction_history
+        .iter()
+        .map(|(id, token_event)| (*id, token_event.clone()))
+        .collect::<Vec<_>>();
+
+    let all_utility_token_transactions_chunks = all_utility_token_transactions_vec
+        .chunks(CHUNK_SIZE)
+        .collect::<Vec<_>>();
+
+    for chunk in all_utility_token_transactions_chunks {
+        let _: () = call::call(
+            canister_id_to_send_to,
+            "receive_my_utility_token_transaction_history_from_data_backup_canister_v1",
+            (chunk.to_vec(),),
+        )
+        .await
+        .expect("Failed to call the receive_my_utility_token_transaction_history_from_data_backup_canister_v1 method on the individual user's canister");
+    }
+}
+
+
+#[deprecated(note = "use send_utility_token_balance_v1 instead")]
 async fn send_utility_token_balance(users_data: &AllUserData) {
     let canister_id_to_send_to = users_data.user_canister_id;
 
@@ -150,6 +180,18 @@ async fn send_utility_token_balance(users_data: &AllUserData) {
     )
     .await
     .expect("Failed to call the receive_my_utility_token_balance_from_data_backup_canister method on the individual user's canister");
+}
+
+async fn send_utility_token_balance_v1(users_data: &AllUserData) {
+    let canister_id_to_send_to = users_data.user_canister_id;
+
+    let _: () = call::call(
+        canister_id_to_send_to,
+        "receive_my_utility_token_balance_from_data_backup_canister_v1",
+        (users_data.canister_data.token_data.utility_token_balance,),
+    )
+    .await
+    .expect("Failed to call the receive_my_utility_token_balance_from_data_backup_canister_v1 method on the individual user's canister");
 }
 
 async fn send_posts(users_data: &AllUserData) {

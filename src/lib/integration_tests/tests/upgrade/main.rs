@@ -1,3 +1,4 @@
 pub mod bet_details_heap_to_stable_mem_upgrade;
 pub mod feed_filter_upgrade_test;
 pub mod on_every_upgrade_fetch_the_latest_list_of_well_known_principals_and_update_canisters;
+pub mod new_slot_type_upgrade_test;

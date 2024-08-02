@@ -5,10 +5,10 @@ use serde::Serialize;
 use serde_json_any_key::*;
 
 use crate::common::types::utility_token::token_event::{
-    HotOrNotOutcomePayoutEvent, MintEvent, StakeEvent, TokenEvent,
-    HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE, HOT_OR_NOT_BET_WINNINGS_MULTIPLIER,
+    HotOrNotOutcomePayoutEvent, HotOrNotOutcomePayoutEventV1, MintEvent, StakeEvent, TokenEvent, TokenEventV1, HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE, HOT_OR_NOT_BET_WINNINGS_MULTIPLIER
 };
 
+#[deprecated(note = "use TokenBalanceV1 instead")]
 #[derive(Default, Clone, Deserialize, CandidType, Debug, Serialize)]
 pub struct TokenBalance {
     pub utility_token_balance: u64,
@@ -82,6 +82,100 @@ impl TokenBalance {
 
         self.utility_token_transaction_history
             .insert(last_key + 1, token_event);
+    }
+}
+
+
+
+#[derive(Default, Clone, Deserialize, CandidType, Debug, Serialize)]
+pub struct TokenBalanceV1 {
+    pub utility_token_balance: u64,
+    pub utility_token_transaction_history: BTreeMap<u64, TokenEventV1>,
+    pub lifetime_earnings: u64,
+}
+
+impl TokenBalanceV1 {
+    pub fn get_utility_token_balance(&self) -> u64 {
+        self.utility_token_balance
+    }
+
+    pub fn get_utility_token_transaction_history(&self) -> &BTreeMap<u64, TokenEventV1> {
+        &self.utility_token_transaction_history
+    }
+
+    pub fn handle_token_event(&mut self, token_event: TokenEventV1) {
+        match &token_event {
+            TokenEventV1::Mint { details, .. } => match details {
+                MintEvent::NewUserSignup { .. } => {
+                    self.utility_token_balance += token_event.get_token_amount_for_token_event();
+                    self.lifetime_earnings += token_event.get_token_amount_for_token_event();
+                }
+                MintEvent::Referral { .. } => {
+                    self.utility_token_balance += token_event.get_token_amount_for_token_event();
+                    self.lifetime_earnings += token_event.get_token_amount_for_token_event();
+                }
+            },
+            TokenEventV1::Burn => {}
+            TokenEventV1::Transfer {amount, ..} => {
+                    self.utility_token_balance -= amount;
+            }
+            TokenEventV1::Receive { amount, .. } => {
+                    self.utility_token_balance += amount;
+            }
+            TokenEventV1::Stake { details, .. } => match details {
+                StakeEvent::BetOnHotOrNotPost { bet_amount, .. } => {
+                    self.utility_token_balance -= bet_amount;
+                }
+            },
+            TokenEventV1::HotOrNotOutcomePayout { details, .. } => match details {
+                HotOrNotOutcomePayoutEventV1::CommissionFromHotOrNotBet {
+                    room_pot_total_amount,
+                    ..
+                } => {
+                    self.utility_token_balance +=
+                        room_pot_total_amount * HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE / 100;
+                    self.lifetime_earnings +=
+                        room_pot_total_amount * HOT_OR_NOT_BET_CREATOR_COMMISSION_PERCENTAGE / 100;
+                }
+                HotOrNotOutcomePayoutEventV1::WinningsEarnedFromBet {
+                    winnings_amount, ..
+                } => {
+                    self.utility_token_balance += winnings_amount;
+                    self.lifetime_earnings +=
+                        get_earnings_amount_from_winnings_amount(winnings_amount);
+                }
+            },
+        }
+
+        let utility_token_transaction_history = &mut self.utility_token_transaction_history;
+
+        let last_key = *utility_token_transaction_history
+            .last_key_value()
+            .unwrap_or((&0, &TokenEventV1::Burn))
+            .0;
+
+        if utility_token_transaction_history.len() > 1500 {
+            utility_token_transaction_history.retain(|key, _| *key > last_key - 1000)
+        }
+
+        self.utility_token_transaction_history
+            .insert(last_key + 1, token_event);
+    }
+}
+
+
+// Assuming TokenEventV1 implements From<TokenEvent>
+impl From<TokenBalance> for TokenBalanceV1 {
+    fn from(tb: TokenBalance) -> Self {
+        TokenBalanceV1 {
+            utility_token_balance: tb.utility_token_balance,
+            utility_token_transaction_history: tb
+                .utility_token_transaction_history
+                .into_iter()
+                .map(|(k, v)| (k, v.into()))
+                .collect(),
+            lifetime_earnings: tb.lifetime_earnings,
+        }
     }
 }
 

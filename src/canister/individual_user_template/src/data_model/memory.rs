@@ -19,6 +19,13 @@ const KV_STORAGE_NAMESPACE_KEY_VALUE_MEMORY: MemoryId = MemoryId::new(6);
 const WATCH_HISTORY_MEMORY: MemoryId = MemoryId::new(7);
 const SUCCESS_HISTORY_MEMORY: MemoryId = MemoryId::new(8);
 
+const BET_TIMER_MEMORY: MemoryId = MemoryId::new(9);
+const BET_FIRST_AT_TIMER_MEMORY: MemoryId = MemoryId::new(10);
+
+const BET_DETAILS_MEMORY_V1: MemoryId = MemoryId::new(11);
+const ROOM_DETAILS_MEMORY_V1: MemoryId = MemoryId::new(12);
+const SLOT_DETAILS_MEMORY_V1: MemoryId = MemoryId::new(13);
+
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
@@ -36,8 +43,24 @@ pub fn get_room_details_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(ROOM_DETAILS_MEMORY))
 }
 
+pub fn get_room_details_memory_v1() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(ROOM_DETAILS_MEMORY_V1))
+}
+
 pub fn get_bet_details_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(BET_DETAILS_MEMORY))
+}
+
+pub fn get_bet_details_memory_v1() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(BET_DETAILS_MEMORY_V1))
+}
+
+pub fn get_bet_timer_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(BET_TIMER_MEMORY))
+}
+
+pub fn get_bet_timer_first_bet_at_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(BET_FIRST_AT_TIMER_MEMORY))
 }
 
 pub fn get_post_principal_memory() -> Memory {
@@ -46,6 +69,10 @@ pub fn get_post_principal_memory() -> Memory {
 
 pub fn get_slot_details_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(SLOT_DETAILS_MEMORY))
+}
+
+pub fn get_slot_details_memory_v1() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(SLOT_DETAILS_MEMORY_V1))
 }
 
 pub fn get_kv_storage_namespace_memory() -> Memory {
