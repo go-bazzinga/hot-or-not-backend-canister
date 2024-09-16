@@ -8,12 +8,11 @@ use std::{
 
 use crate::{
     canister_specific::individual_user_template::types::profile::UserProfileDetailsForFrontend,
-    common::types::{app_primitive_type::PostId, top_posts::post_score_index_item::PostStatus},
+    common::types::{app_primitive_type::PostId, top_posts::post_score_index_item::PostStatus, utility_token::token_event::NewSlotType},
 };
 
 use super::hot_or_not::{
-    BetDetails, BettingStatus, GlobalBetId, GlobalRoomId, HotOrNotDetails, RoomDetailsV1,
-    SlotDetailsV1, SlotId, StablePrincipal,
+    BetDetails, BettingStatus, BettingStatusV1, GlobalBetId, GlobalRoomId, GlobalRoomIdV1, HotOrNotDetails, RoomDetailsV1, SlotDetailsV1, SlotId, StablePrincipal
 };
 
 #[derive(CandidType, Clone, Deserialize, Debug, Serialize)]
@@ -70,6 +69,7 @@ pub struct PostViewStatistics {
     pub average_watch_percentage: u8,
 }
 
+#[deprecated(note = "use PostDetailsForFrontendV1 instead")]
 #[derive(Serialize, CandidType, Deserialize, Debug, PartialEq, Eq)]
 pub struct PostDetailsForFrontend {
     pub id: u64,
@@ -88,6 +88,27 @@ pub struct PostDetailsForFrontend {
     pub home_feed_ranking_score: u64,
     pub hot_or_not_feed_ranking_score: Option<u64>,
     pub hot_or_not_betting_status: Option<BettingStatus>,
+    pub is_nsfw: bool,
+}
+
+#[derive(Serialize, CandidType, Deserialize, Debug, PartialEq, Eq)]
+pub struct PostDetailsForFrontendV1 {
+    pub id: u64,
+    pub created_by_display_name: Option<String>,
+    pub created_by_unique_user_name: Option<String>,
+    pub created_by_user_principal_id: Principal,
+    pub created_by_profile_photo_url: Option<String>,
+    pub created_at: SystemTime,
+    pub description: String,
+    pub hashtags: Vec<String>,
+    pub video_uid: String,
+    pub status: PostStatus,
+    pub total_view_count: u64,
+    pub like_count: u64,
+    pub liked_by_me: bool,
+    pub home_feed_ranking_score: u64,
+    pub hot_or_not_feed_ranking_score: Option<u64>,
+    pub hot_or_not_betting_status_v1: Option<BettingStatusV1>,
     pub is_nsfw: bool,
 }
 
@@ -141,6 +162,7 @@ impl Post {
         }
     }
 
+    #[deprecated(note = "use get_post_details_for_frontend_for_this_post_v1 instead")]
     pub fn get_post_details_for_frontend_for_this_post(
         &self,
         user_profile: UserProfileDetailsForFrontend,
@@ -202,6 +224,70 @@ impl Post {
             },
         }
     }
+
+
+    pub fn get_post_details_for_frontend_for_this_post_v1(
+        &self,
+        user_profile: UserProfileDetailsForFrontend,
+        caller: Principal,
+        current_time: &SystemTime,
+        room_details_map: &ic_stable_structures::btreemap::BTreeMap<
+            GlobalRoomIdV1,
+            RoomDetailsV1,
+            VirtualMemory<DefaultMemoryImpl>,
+        >,
+        post_principal_map: &ic_stable_structures::btreemap::BTreeMap<
+            (PostId, StablePrincipal),
+            (),
+            VirtualMemory<DefaultMemoryImpl>,
+        >,
+        slot_details_map: &ic_stable_structures::btreemap::BTreeMap<
+            (PostId, NewSlotType),
+            SlotDetailsV1,
+            VirtualMemory<DefaultMemoryImpl>,
+        >,
+    ) -> PostDetailsForFrontendV1 {
+        PostDetailsForFrontendV1 {
+            id: self.id,
+            created_by_display_name: user_profile.display_name,
+            created_by_unique_user_name: user_profile.unique_user_name,
+            created_by_user_principal_id: user_profile.principal_id,
+            created_by_profile_photo_url: user_profile.profile_picture_url,
+            created_at: self.created_at,
+            description: self.description.clone(),
+            hashtags: self.hashtags.clone(),
+            video_uid: self.video_uid.clone(),
+            status: self.status.clone(),
+            total_view_count: self.view_stats.total_view_count,
+            like_count: self.likes.len() as u64,
+            is_nsfw: self.is_nsfw,
+            liked_by_me: self.likes.contains(&caller),
+            home_feed_ranking_score: self.home_feed_score.current_score,
+            hot_or_not_feed_ranking_score: if self.hot_or_not_details.is_some() {
+                Some(
+                    self.hot_or_not_details
+                        .as_ref()
+                        .unwrap()
+                        .hot_or_not_feed_score
+                        .current_score,
+                )
+            } else {
+                None
+            },
+            hot_or_not_betting_status_v1: if self.creator_consent_for_inclusion_in_hot_or_not {
+                Some(self.get_hot_or_not_betting_status_for_this_post_v2(
+                    current_time,
+                    &caller,
+                    room_details_map,
+                    post_principal_map,
+                    slot_details_map,
+                ))
+            } else {
+                None
+            },
+        }
+    }
+
 
     pub fn increment_share_count(&mut self) -> u64 {
         self.share_count += 1;

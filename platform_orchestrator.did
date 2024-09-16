@@ -1,0 +1,98 @@
+type CanisterUpgradeStatus = record {
+  failures : vec record { principal; text };
+  count : nat64;
+  upgrade_arg : UpgradeCanisterArg;
+};
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : vec nat8;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  body : vec nat8;
+  headers : vec record { text; text };
+  status_code : nat16;
+};
+type KnownPrincipalType = variant {
+  CanisterIdUserIndex;
+  CanisterIdPlatformOrchestrator;
+  CanisterIdConfiguration;
+  CanisterIdHotOrNotSubnetOrchestrator;
+  CanisterIdProjectMemberIndex;
+  CanisterIdTopicCacheIndex;
+  CanisterIdRootCanister;
+  CanisterIdDataBackup;
+  CanisterIdPostCache;
+  CanisterIdSNSController;
+  CanisterIdSnsGovernance;
+  UserIdGlobalSuperAdmin;
+};
+type PlatformOrchestratorGenericArgumentType = variant {
+  UpgradeSubnetCanisters : UpgradeCanisterArg;
+  RemoveSubnetOrchestratorFromAvailableList : principal;
+  ProvisionSubnetOrchestrator : principal;
+  UploadWasm : record { WasmType; vec nat8 };
+};
+type PlatformOrchestratorGenericResultType = variant {
+  UpgradeSubnetCanisters : Result;
+  ProvisionSubnetOrchestrator : Result_1;
+  RemoveSubnetOrchestratorFromAvailableListResult : Result;
+  UploadWasm : Result;
+};
+type PlatformOrchestratorInitArgs = record { version : text };
+type Result = variant { Ok : text; Err : text };
+type Result_1 = variant { Ok : principal; Err : text };
+type Result_2 = variant { Ok; Err : text };
+type UpgradeCanisterArg = record {
+  version : text;
+  canister : WasmType;
+  wasm_blob : vec nat8;
+};
+type WasmType = variant {
+  IndividualUserWasm;
+  PostCacheWasm;
+  SubnetOrchestratorWasm;
+};
+service : {
+  add_principal_as_global_admin : (principal) -> ();
+  deposit_cycles_to_canister : (principal, nat) -> (Result);
+  get_all_available_subnet_orchestrators : () -> (vec principal) query;
+  get_all_global_admins : () -> (vec principal) query;
+  get_all_subnet_orchestrators : () -> (vec principal) query;
+  get_global_known_principal : (KnownPrincipalType) -> (principal) query;
+  get_subnet_known_principal : (principal, KnownPrincipalType) -> (
+      principal,
+    ) query;
+  get_subnet_last_upgrade_status : () -> (CanisterUpgradeStatus) query;
+  get_version : () -> (text) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  platform_orchestrator_generic_function : (
+      PlatformOrchestratorGenericArgumentType,
+    ) -> (PlatformOrchestratorGenericResultType);
+  populate_known_principal_for_all_subnet : () -> ();
+  provision_subnet_orchestrator_canister : (principal) -> (Result_1);
+  recharge_subnet_orchestrator : () -> (Result_2);
+  reinstall_yral_post_cache_canister : () -> ();
+  remove_principal_from_global_admins : (principal) -> ();
+  remove_subnet_orchestrators_from_available_list : (principal) -> (Result);
+  start_reclaiming_cycles_from_individual_canisters : () -> (Result);
+  start_reclaiming_cycles_from_subnet_orchestrator_canister : () -> (text);
+  stop_upgrades_for_individual_user_canisters : () -> (Result);
+  subnet_orchestrator_maxed_out : () -> ();
+  update_canisters_last_functionality_access_time : () -> (Result);
+  update_global_known_principal : (KnownPrincipalType, principal) -> (Result);
+  update_profile_owner_for_individual_canisters : () -> ();
+  update_restart_timers_hon_game : () -> (Result);
+  update_subnet_known_principal : (
+      principal,
+      KnownPrincipalType,
+      principal,
+    ) -> (Result);
+  upgrade_canisters_in_network : (UpgradeCanisterArg) -> (Result);
+  upgrade_specific_individual_canister : (principal) -> ();
+  upload_wasms : (WasmType, vec nat8) -> (Result);
+  validate_platform_orchestrator_generic_function : (
+      PlatformOrchestratorGenericArgumentType,
+    ) -> (Result);
+}

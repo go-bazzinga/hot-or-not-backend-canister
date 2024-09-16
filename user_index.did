@@ -1,0 +1,164 @@
+type BroadcastCallStatus = record {
+  successful_canister_ids : vec principal;
+  failed_canisters_count : nat64;
+  successful_canisters_count : nat64;
+  method_name : text;
+  failed_canister_ids : vec record { principal; text };
+  timestamp : SystemTime;
+  total_canisters : nat64;
+};
+type CanisterInstallMode = variant { reinstall; upgrade; install };
+type CanisterStatusResponse = record {
+  status : CanisterStatusType;
+  memory_size : nat;
+  cycles : nat;
+  settings : DefiniteCanisterSettings;
+  query_stats : QueryStats;
+  idle_cycles_burned_per_day : nat;
+  module_hash : opt vec nat8;
+};
+type CanisterStatusType = variant { stopped; stopping; running };
+type DefiniteCanisterSettings = record {
+  freezing_threshold : nat;
+  controllers : vec principal;
+  memory_allocation : nat;
+  compute_allocation : nat;
+};
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : vec nat8;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  body : vec nat8;
+  headers : vec record { text; text };
+  status_code : nat16;
+};
+type KnownPrincipalType = variant {
+  CanisterIdUserIndex;
+  CanisterIdPlatformOrchestrator;
+  CanisterIdConfiguration;
+  CanisterIdHotOrNotSubnetOrchestrator;
+  CanisterIdProjectMemberIndex;
+  CanisterIdTopicCacheIndex;
+  CanisterIdRootCanister;
+  CanisterIdDataBackup;
+  CanisterIdPostCache;
+  CanisterIdSNSController;
+  CanisterIdSnsGovernance;
+  UserIdGlobalSuperAdmin;
+};
+type QueryStats = record {
+  response_payload_bytes_total : nat;
+  num_instructions_total : nat;
+  num_calls_total : nat;
+  request_payload_bytes_total : nat;
+};
+type RecycleStatus = record {
+  last_recycled_duration : opt nat64;
+  last_recycled_at : opt SystemTime;
+  num_last_recycled_canisters : nat64;
+  success_canisters : vec text;
+  failed_recycling : vec record { principal; text };
+};
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type Result = variant { Ok : text; Err : text };
+type Result_1 = variant {
+  Ok : record { CanisterStatusResponse };
+  Err : record { RejectionCode; text };
+};
+type Result_2 = variant { Ok; Err : text };
+type Result_3 = variant { Ok; Err : SetUniqueUsernameError };
+type SetUniqueUsernameError = variant {
+  UsernameAlreadyTaken;
+  SendingCanisterDoesNotMatchUserCanisterId;
+  UserCanisterEntryDoesNotExist;
+};
+type SystemTime = record {
+  nanos_since_epoch : nat32;
+  secs_since_epoch : nat64;
+};
+type UpgradeStatus = record {
+  version_number : nat64;
+  version : text;
+  last_run_on : SystemTime;
+  failed_canister_ids : vec record { principal; principal; text };
+  successful_upgrade_count : nat32;
+};
+type UserAccessRole = variant {
+  CanisterController;
+  ProfileOwner;
+  CanisterAdmin;
+  ProjectCanister;
+};
+type UserIndexInitArgs = record {
+  known_principal_ids : opt vec record { KnownPrincipalType; principal };
+  version : text;
+  access_control_map : opt vec record { principal; vec UserAccessRole };
+};
+service : {
+  are_signups_enabled : () -> (bool) query;
+  create_pool_of_individual_user_available_canisters : (text, vec nat8) -> (
+      Result,
+    );
+  get_current_list_of_all_well_known_principal_values : () -> (
+      vec record { KnownPrincipalType; principal },
+    ) query;
+  get_index_details_is_user_name_taken : (text) -> (bool) query;
+  get_index_details_last_upgrade_status : () -> (UpgradeStatus) query;
+  get_last_broadcast_call_status : () -> (BroadcastCallStatus) query;
+  get_list_of_available_canisters : () -> (vec principal) query;
+  get_recycle_status : () -> (RecycleStatus) query;
+  get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer : () -> (
+      principal,
+    );
+  get_subnet_available_capacity : () -> (nat64) query;
+  get_subnet_backup_capacity : () -> (nat64) query;
+  get_user_canister_id_from_unique_user_name : (text) -> (opt principal) query;
+  get_user_canister_id_from_user_principal_id : (principal) -> (
+      opt principal,
+    ) query;
+  get_user_canister_incl_avail_list : () -> (vec principal) query;
+  get_user_canister_list : () -> (vec principal) query;
+  get_user_canister_status : (principal) -> (Result_1);
+  get_user_id_and_canister_list : () -> (
+      vec record { principal; principal },
+    ) query;
+  get_user_index_canister_count : () -> (nat64) query;
+  get_user_index_canister_cycle_balance : () -> (nat) query;
+  get_well_known_principal_value : (KnownPrincipalType) -> (
+      opt principal,
+    ) query;
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  issue_rewards_for_referral : (principal, principal, principal) -> (Result);
+  reclaim_cycles_from_individual_canisters : () -> ();
+  request_cycles : (nat) -> (Result_2);
+  reset_user_individual_canisters : (vec principal) -> (Result);
+  return_cycles_to_platform_orchestrator_canister : () -> (Result);
+  set_permission_to_upgrade_individual_canisters : (bool) -> (text);
+  start_upgrades_for_individual_canisters : (text, vec nat8) -> (text);
+  toggle_signups_enabled : () -> (Result_2);
+  update_canisters_last_functionality_access_time : () -> (text);
+  update_index_with_unique_user_name_corresponding_to_user_principal_id : (
+      text,
+      principal,
+    ) -> (Result_3);
+  update_profile_owner_for_individual_canisters : () -> ();
+  update_restart_timers_hon_game : () -> (text);
+  update_well_known_principal : (KnownPrincipalType, principal) -> ();
+  upgrade_specific_individual_user_canister_with_latest_wasm : (
+      principal,
+      opt principal,
+      opt CanisterInstallMode,
+    ) -> (text);
+  validate_reset_user_individual_canisters : (vec principal) -> (Result) query;
+}

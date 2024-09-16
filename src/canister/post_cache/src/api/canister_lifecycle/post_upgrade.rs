@@ -169,7 +169,6 @@ async fn migrate_data_impl() {
                 canister_data_ref_cell
                     .posts_index_sorted_by_hot_or_not_feed_score_v1
                     .replace(&new_post);
-
                 // Migrate Yral Feed
 
                 canister_data_ref_cell
@@ -178,4 +177,5 @@ async fn migrate_data_impl() {
             });
         }
     }
+
 }

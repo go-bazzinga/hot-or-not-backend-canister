@@ -58,6 +58,8 @@ pub struct CanisterDataForSnapshot {
     pub slot_details_map: BTreeMap<(PostId, SlotId), SlotDetailsV1>,
     #[serde(with = "any_key_map")]
     pub all_hot_or_not_bets_placed: BTreeMap<(CanisterId, PostId), PlacedBetDetail>,
+    // #[serde(with = "any_key_map")]
+    // pub all_hot_or_not_bets_placed_v1: BTreeMap<(CanisterId, PostId), PlacedBetDetailV1>,
     pub configuration: IndividualUserConfiguration,
     pub follow_data: FollowDataForSnapshot,
     #[serde(with = "any_key_map")]
@@ -229,6 +231,7 @@ impl From<&CanisterData> for CanisterDataForSnapshot {
             post_principal_map,
             slot_details_map,
             all_hot_or_not_bets_placed: canister_data.all_hot_or_not_bets_placed.clone(),
+            // all_hot_or_not_bets_placed_v1: canister_data.all_hot_or_not_bets_placed_v1.clone(),
             configuration: canister_data.configuration.clone(),
             follow_data,
             known_principal_ids: canister_data.known_principal_ids.clone(),
@@ -349,6 +352,7 @@ impl From<CanisterDataForSnapshot> for CanisterData {
             post_principal_map,
             slot_details_map,
             all_hot_or_not_bets_placed: canister_data.all_hot_or_not_bets_placed,
+            // all_hot_or_not_bets_placed_v1: canister_data.all_hot_or_not_bets_placed_v1,
             configuration: canister_data.configuration,
             follow_data,
             known_principal_ids: canister_data.known_principal_ids,

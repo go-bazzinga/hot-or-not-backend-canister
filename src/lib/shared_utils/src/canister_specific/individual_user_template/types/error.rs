@@ -22,7 +22,7 @@ pub enum GetFollowerOrFollowingPageError {
     Unauthorized,
 }
 
-#[derive(CandidType, PartialEq, Eq, Debug, Deserialize)]
+#[derive(CandidType, PartialEq, Eq, Debug, Deserialize, Clone)]
 pub enum BetOnCurrentlyViewingPostError {
     BettingClosed,
     InsufficientBalance,

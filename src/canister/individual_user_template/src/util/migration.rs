@@ -12,7 +12,7 @@ use shared_utils::{
         session::SessionType,
     },
     common::{
-        types::{known_principal::KnownPrincipalType, utility_token::token_event::TokenEvent},
+        types::{known_principal::KnownPrincipalType, utility_token::token_event::{TokenEvent, TokenEventV1}},
         utils::system_time::{get_current_system_time, get_current_system_time_from_ic},
     },
 };
@@ -156,7 +156,7 @@ impl IndividualUser {
         to_individual_user: IndividualUser,
     ) -> Result<(), MigrationErrors> {
         let token =
-            CANISTER_DATA.with_borrow(|canister_data| canister_data.my_token_balance.clone());
+            CANISTER_DATA.with_borrow(|canister_data| canister_data.my_token_balance_v1.clone());
 
         let (transfer_res,): (Result<(), MigrationErrors>,) = call(
             to_individual_user.canister_id,
@@ -173,8 +173,8 @@ impl IndividualUser {
         match transfer_res {
             Ok(()) => CANISTER_DATA.with_borrow_mut(|canister_data| {
                 canister_data
-                    .my_token_balance
-                    .handle_token_event(TokenEvent::Transfer {
+                    .my_token_balance_v1
+                    .handle_token_event(TokenEventV1::Transfer {
                         amount: token.utility_token_balance,
                         to_account: to_individual_user.profile_principal,
                         timestamp: get_current_system_time(),

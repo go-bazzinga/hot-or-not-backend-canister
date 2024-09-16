@@ -48,20 +48,20 @@ fn add_post_v2(post_details: PostDetailsFromFrontend) -> Result<u64, String> {
 
     // if post_details.creator_consent_for_inclusion_in_hot_or_not {
         // * schedule hot_or_not outcome tabulation for the 48 hours after the post is created
-        (1..=48).for_each(|slot_number: u8| {
-            ic_cdk_timers::set_timer(
-                Duration::from_secs(slot_number as u64 * 60 * 60),
-                move || {
-                    CANISTER_DATA.with(|canister_data_ref_cell| {
-                        tabulate_hot_or_not_outcome_for_post_slot(
-                            &mut canister_data_ref_cell.borrow_mut(),
-                            post_id,
-                            slot_number,
-                        );
-                    });
-                },
-            );
-        });
+        // (1..=48).for_each(|slot_number: u8| {
+        //     ic_cdk_timers::set_timer(
+        //         Duration::from_secs(slot_number as u64 * 60 * 60),
+        //         move || {
+        //             CANISTER_DATA.with(|canister_data_ref_cell| {
+        //                 tabulate_hot_or_not_outcome_for_post_slot(
+        //                     &mut canister_data_ref_cell.borrow_mut(),
+        //                     post_id,
+        //                     slot_number,
+        //                 );
+        //             });
+        //         },
+        //     );
+        // });
     // }
 
     Ok(post_id)

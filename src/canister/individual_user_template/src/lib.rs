@@ -18,7 +18,7 @@ use shared_utils::{
             GetPostsOfUserProfileError, CdaoDeployError, CdaoTokenError,
         },
         follow::{FollowEntryDetail, FollowEntryId},
-        hot_or_not::{BetOutcomeForBetMaker, BettingStatus, PlacedBetDetail},
+        hot_or_not::{BetOutcomeForBetMaker, BettingStatus,BettingStatusV1, PlacedBetDetail, PlacedBetDetailV1},
         kv_storage::{NamespaceErrors, NamespaceForFrontend},
         migration::MigrationErrors,
         ml_data::{MLFeedCacheItem, SuccessHistoryItemV1, WatchHistoryItem},
@@ -44,6 +44,8 @@ use shared_utils::{
     },
     pagination::PaginationError,
 };
+use shared_utils::canister_specific::individual_user_template::types::post::PostDetailsForFrontendV1;
+use shared_utils::common::types::utility_token::token_event::TokenEventV1;
 use ic_sns_init::pb::v1::SnsInitPayload;
 use icrc_ledger_types::icrc1::transfer::Memo;
 use ic_nns_governance::pb::v1::{SettleNeuronsFundParticipationRequest, SettleNeuronsFundParticipationResponse};

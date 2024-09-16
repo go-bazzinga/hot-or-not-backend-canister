@@ -5,4 +5,5 @@ pub mod get_individual_hot_or_not_bet_placed_by_this_profile;
 pub mod receive_bet_from_bet_makers_canister;
 pub mod receive_bet_winnings_when_distributed;
 pub mod reenqueue_timers_for_pending_bet_outcomes;
+pub mod reenqueue_timers_for_pending_bet_outcomes_v1;
 pub mod tabulate_hot_or_not_outcome_for_post_slot;
