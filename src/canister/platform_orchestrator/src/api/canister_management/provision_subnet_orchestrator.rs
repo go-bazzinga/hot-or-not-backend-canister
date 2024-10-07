@@ -15,10 +15,10 @@ use shared_utils::{
     canister_specific::{
         post_cache::types::arg::PostCacheInitArgs, user_index::types::args::UserIndexInitArgs,
     },
-    common::types::{
+    common::{participant_crypto::ProofOfParticipation, types::{
         known_principal::{KnownPrincipalMap, KnownPrincipalType},
         wasm::WasmType,
-    },
+    }},
     constant::{
         GLOBAL_SUPER_ADMIN_USER_ID, INDIVIDUAL_USER_CANISTER_RECHARGE_AMOUNT,
         NNS_CYCLE_MINTING_CANISTER, POST_CACHE_CANISTER_CYCLES_RECHARGE_AMOUMT,
@@ -117,11 +117,14 @@ pub async fn provision_subnet_orchestrator_canister(
             .insert(subnet_orchestrator_canister_id);
     });
 
+    let mut proof_of_participation = ProofOfParticipation::new_for_root();
+    proof_of_participation = proof_of_participation.derive_for_child(subnet_orchestrator_canister_id).await.unwrap();
     let user_index_init_arg = UserIndexInitArgs {
         known_principal_ids: Some(known_principal_map.clone()),
         access_control_map: None,
         version: CANISTER_DATA
             .with_borrow(|canister_data| canister_data.version_detail.version.clone()),
+        proof_of_participation: Some(proof_of_participation),
     };
 
     let subnet_orchestrator_install_code_arg = InstallCodeArgument {

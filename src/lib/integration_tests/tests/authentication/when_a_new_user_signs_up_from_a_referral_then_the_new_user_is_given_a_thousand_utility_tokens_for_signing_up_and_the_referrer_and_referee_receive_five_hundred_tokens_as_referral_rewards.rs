@@ -13,7 +13,7 @@ use shared_utils::{
     types::canister_specific::individual_user_template::error_types::GetUserUtilityTokenTransactionHistoryError,
 };
 use test_utils::setup::{
-    env::v1::{get_initialized_env_with_provisioned_known_canisters, get_new_state_machine},
+    env::{pocket_ic_env::{execute_query, execute_query_multi, execute_update, execute_update_no_res, get_new_pocket_ic_env}, v1::{get_initialized_env_with_provisioned_known_canisters, get_new_state_machine}},
     test_constants::{get_mock_user_alice_principal_id, get_mock_user_bob_principal_id},
 };
 
@@ -465,4 +465,186 @@ fn when_a_new_user_signs_up_from_a_referral_then_the_new_user_is_given_a_thousan
         "🧪 alice_utility_token_transaction_history_after_referral: {:#?}",
         alice_utility_token_transaction_history_after_referral
     );
+}
+
+#[test]
+fn when_a_new_user_signs_up_from_a_referral_then_the_new_user_is_given_a_thousand_utility_tokens_for_signing_up_and_the_referrer_and_referee_receive_five_hundred_tokens_as_referral_rewards_v2() {
+    let (pic, known_principals) = get_new_pocket_ic_env();
+    let global_admin_principal = known_principals[&KnownPrincipalType::UserIdGlobalSuperAdmin];
+
+    let platform_orc = known_principals[&KnownPrincipalType::CanisterIdPlatformOrchestrator];
+    let app_subnets = pic.topology().get_app_subnets();
+    let user_index_res: Result<Principal, String> = execute_update(
+        &pic,
+        global_admin_principal,
+        platform_orc,
+        "provision_subnet_orchestrator_canister",
+        &app_subnets[0]
+    );
+    let user_index = user_index_res.unwrap();
+    for _ in 0..30 {
+        pic.tick();
+    }
+
+    let alice_principal = get_mock_user_alice_principal_id();
+    let alice_canister: Principal = execute_update(
+        &pic,
+        alice_principal,
+        user_index,
+        "get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer",
+        &()
+    );
+
+    let alice_balance_after_signup: u64 = execute_query(
+        &pic,
+        Principal::anonymous(),
+        alice_canister,
+        "get_utility_token_balance",
+        &()
+    );
+    assert_eq!(alice_balance_after_signup, 1000);
+
+    let alice_txn_history_after_signup_res: Result<Vec<(u64, TokenEvent)>, GetUserUtilityTokenTransactionHistoryError> = execute_query_multi(
+        &pic,
+        Principal::anonymous(),
+        alice_canister,
+        "get_user_utility_token_transaction_history_with_pagination",
+        (0u64, 10u64)
+    );
+    let alice_txn_history_after_signup = alice_txn_history_after_signup_res.unwrap();
+
+    assert!(matches!(
+        alice_txn_history_after_signup.as_slice(),
+        [
+            (_, TokenEvent::Mint {
+                details: MintEvent::NewUserSignup {
+                    new_user_principal_id
+                },
+                ..
+            })
+        ] if *new_user_principal_id == alice_principal
+    ));
+
+    let super_admin_user_id = Principal::from_text(GLOBAL_SUPER_ADMIN_USER_ID).unwrap();
+    execute_update_no_res(
+        &pic,
+        super_admin_user_id,
+        alice_canister,
+        "update_session_type",
+        &SessionType::RegisteredSession
+    );
+
+    let bob_principal = get_mock_user_bob_principal_id();
+    let bob_canister: Principal = execute_update(
+        &pic,
+        bob_principal,
+        user_index,
+        "get_requester_principals_canister_id_create_if_not_exists_and_optionally_allow_referrer",
+        &()
+    );
+
+    let ref_details = UserCanisterDetails {
+        profile_owner: alice_principal,
+        user_canister_id: alice_canister,
+    };
+    execute_update_no_res(
+        &pic,
+        bob_principal,
+        bob_canister,
+        "update_referrer_details",
+        &ref_details
+    );
+
+    let bob_profile_details: UserProfileDetailsForFrontend = execute_query(
+        &pic,
+        Principal::anonymous(),
+        bob_canister,
+        "get_profile_details",
+        &()
+    );
+    assert!(matches!(
+        bob_profile_details.referrer_details,
+        Some(details) if details == ref_details
+    ));
+
+    execute_update_no_res(
+        &pic,
+        super_admin_user_id,
+        bob_canister,
+        "update_session_type",
+        &SessionType::RegisteredSession
+    );
+
+    execute_update_no_res(
+        &pic,
+        bob_principal,
+        bob_canister,
+        "receive_reward_for_being_referred",
+        &()
+    );
+
+    // wait for receive_reward to trigger on alice as well
+    for _ in 0..30 {
+        pic.tick();
+    }
+
+    let alice_balance_after_ref: u64 = execute_query(
+        &pic,
+        Principal::anonymous(),
+        alice_canister,
+        "get_utility_token_balance",
+        &()
+    );
+    assert_eq!(alice_balance_after_ref, 1500);
+
+    let bob_balance_after_ref: u64 = execute_query(
+        &pic,
+        Principal::anonymous(),
+        alice_canister,
+        "get_utility_token_balance",
+        &()
+    );
+    assert_eq!(bob_balance_after_ref, 1500);
+
+    let alice_txn_history_after_ref_res: Result<Vec<(u64, TokenEvent)>, GetUserUtilityTokenTransactionHistoryError> = execute_query_multi(
+        &pic,
+        Principal::anonymous(),
+        alice_canister,
+        "get_user_utility_token_transaction_history_with_pagination",
+        (0u64, 10u64)
+    );
+    let alice_txn_history_after_ref = alice_txn_history_after_ref_res.unwrap();
+    assert_eq!(alice_txn_history_after_ref.len(), 2);
+
+    assert!(matches!(
+        alice_txn_history_after_ref[0].1,
+        TokenEvent::Mint {
+            details: MintEvent::Referral {
+                referee_user_principal_id,
+                referrer_user_principal_id
+            },
+            ..
+        } if referrer_user_principal_id == alice_principal && referee_user_principal_id == bob_principal
+    ));
+
+    let bob_txn_history_after_ref_res: Result<Vec<(u64, TokenEvent)>, GetUserUtilityTokenTransactionHistoryError> = execute_query_multi(
+        &pic,
+        Principal::anonymous(),
+        bob_canister,
+        "get_user_utility_token_transaction_history_with_pagination",
+        (0u64, 10u64)
+    );
+    let bob_txn_history_after_ref = bob_txn_history_after_ref_res.unwrap();
+    assert_eq!(bob_txn_history_after_ref.len(), 2);
+
+    assert!(matches!(
+        bob_txn_history_after_ref[0].1,
+        TokenEvent::Mint {
+            details: MintEvent::Referral {
+                referee_user_principal_id,
+                referrer_user_principal_id
+            },
+            ..
+        } if referrer_user_principal_id == alice_principal && referee_user_principal_id == bob_principal
+    ));
 }

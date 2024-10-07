@@ -17,6 +17,7 @@ ciborium = { workspace = true }
 serde_json_any_key = "2.0.0"
 serde_bytes = "0.11.14"
 icrc-ledger-types = { workspace = true }
+ed25519-dalek = "2.1.1"
 
 [dev-dependencies]
 test_utils = { workspace = true }
@@ -24,3 +25,4 @@ pprof = { version = "0.13", features = ["flamegraph"] }
 
 [features]
 mockdata = []
+local = []

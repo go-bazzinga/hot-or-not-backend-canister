@@ -27,3 +27,4 @@ features = ["mockdata"]
 
 [features]
 mockdata = []
+local = ["shared_utils/local"]

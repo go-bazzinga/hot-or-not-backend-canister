@@ -47,6 +47,10 @@ async fn upgrade_specific_individual_user_canister_with_latest_wasm(
             .unwrap()
     });
 
+    let mut proof_of_participation = CANISTER_DATA.with_borrow(|cdata| cdata.proof_of_participation.clone());
+    if let Some(pop) = proof_of_participation {
+        proof_of_participation = Some(pop.derive_for_child(user_canister_id).await.unwrap());
+    }
     match canister_management::upgrade_individual_user_canister(
         user_canister_id,
         upgrade_mode.unwrap_or(CanisterInstallMode::Upgrade(None)),
@@ -56,6 +60,7 @@ async fn upgrade_specific_individual_user_canister_with_latest_wasm(
             upgrade_version_number: Some(saved_upgrade_status.version_number + 1),
             url_to_send_canister_metrics_to: Some(configuration.url_to_send_canister_metrics_to),
             version: individual_canister_wasm.version,
+            proof_of_participation,
         },
         individual_canister_wasm.wasm_blob,
     )

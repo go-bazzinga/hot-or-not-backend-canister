@@ -16,8 +16,7 @@ use shared_utils::{
         post_cache::types::arg::PostCacheInitArgs, user_index::types::args::UserIndexInitArgs,
     },
     common::{
-        types::wasm::{CanisterWasm, WasmType},
-        utils::{task::run_task_concurrently, upgrade_canister::upgrade_canister_util},
+        participant_crypto::ProofOfParticipation, types::wasm::{CanisterWasm, WasmType}, utils::{task::run_task_concurrently, upgrade_canister::upgrade_canister_util}
     },
     constant::{
         POST_CACHE_CANISTER_CYCLES_RECHARGE_AMOUMT, POST_CACHE_CANISTER_CYCLES_THRESHOLD,
@@ -255,6 +254,10 @@ async fn upgrade_subnet_orchestrator_canister(
     wasm: Vec<u8>,
     version: String,
 ) -> Result<(), String> {
+    // TODO: remove this when all subnet orchestrators are upgraded
+    let mut proof_of_participation = ProofOfParticipation::new_for_root();
+    proof_of_participation = proof_of_participation.derive_for_child(canister_id).await?;
+
     let install_code_arg = InstallCodeArgument {
         mode: CanisterInstallMode::Upgrade(None),
         canister_id,
@@ -263,6 +266,7 @@ async fn upgrade_subnet_orchestrator_canister(
             known_principal_ids: None,
             access_control_map: None,
             version,
+            proof_of_participation: Some(proof_of_participation),
         })
         .unwrap(),
     };

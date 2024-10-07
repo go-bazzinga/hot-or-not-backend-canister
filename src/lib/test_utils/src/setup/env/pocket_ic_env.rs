@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use candid::{CandidType, Principal};
+use candid::{utils::ArgumentEncoder, CandidType, Deserialize, Principal};
 use ic_cdk::api::management_canister::main::CanisterId;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{CanisterSettings, PocketIc, PocketIcBuilder};
+use pocket_ic::{CanisterSettings, PocketIc, PocketIcBuilder, UserError, WasmResult};
 use shared_utils::{
     canister_specific::platform_orchestrator::types::args::PlatformOrchestratorInitArgs,
     common::types::{
@@ -42,6 +42,7 @@ struct AuthorizedSubnetWorks {
 pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     let pocket_ic = PocketIcBuilder::new()
         .with_nns_subnet()
+        .with_ii_subnet() // enables tSchnorr
         .with_application_subnet()
         .with_application_subnet()
         .with_system_subnet()
@@ -191,4 +192,77 @@ pub fn get_new_pocket_ic_env() -> (PocketIc, KnownPrincipalMap) {
     }
 
     (pocket_ic, known_principal)
+}
+
+pub fn execute_query<P: CandidType, R: CandidType + for<'x> Deserialize<'x>>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+    unwrap_res(pic.query_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn execute_query_multi<P: ArgumentEncoder, R: CandidType + for<'x> Deserialize<'x>>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: P,
+) -> R {
+    unwrap_res(pic.query_call(canister_id, sender, method_name, candid::encode_args(payload).unwrap()))
+}
+
+pub fn execute_update<P: CandidType, R: CandidType + for<'x> Deserialize<'x>>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+   unwrap_res(pic.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn execute_update_multi<P: ArgumentEncoder, R: CandidType + for<'x> Deserialize<'x>>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method: &str,
+    payload: P
+) -> R {
+    unwrap_res(pic.update_call(canister_id, sender, method, candid::encode_args(payload).unwrap()))
+}
+
+pub fn execute_update_no_res<P: CandidType>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method: &str,
+    payload: &P,
+) {
+    let res = pic.update_call(canister_id, sender, method, candid::encode_one(payload).unwrap());
+    if let WasmResult::Reject(error) = res.unwrap() {
+        panic!("{error}");
+    }
+}
+
+pub fn execute_update_no_res_multi<P: ArgumentEncoder>(
+    pic: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method: &str,
+    payload: P,
+) {
+    let res = pic.update_call(canister_id, sender, method, candid::encode_args(payload).unwrap());
+    if let WasmResult::Reject(error) = res.unwrap() {
+        panic!("{error}");
+    }
+}
+
+fn unwrap_res<R: CandidType + for<'x> Deserialize<'x>>(response: Result<WasmResult, UserError>) -> R {
+    match response.unwrap() {
+        WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
+        WasmResult::Reject(error) => panic!("{error}"),
+    }
 }

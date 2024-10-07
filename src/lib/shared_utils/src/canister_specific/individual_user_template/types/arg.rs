@@ -1,6 +1,6 @@
 use candid::{CandidType, Deserialize, Principal};
 
-use crate::common::types::known_principal::KnownPrincipalMap;
+use crate::common::{participant_crypto::ProofOfParticipation, types::known_principal::KnownPrincipalMap};
 
 use super::hot_or_not::BetDirection;
 
@@ -11,6 +11,7 @@ pub struct IndividualUserTemplateInitArgs {
     pub upgrade_version_number: Option<u64>,
     pub url_to_send_canister_metrics_to: Option<String>,
     pub version: String,
+    pub proof_of_participation: Option<ProofOfParticipation>,
 }
 
 #[derive(Deserialize, CandidType, Clone)]

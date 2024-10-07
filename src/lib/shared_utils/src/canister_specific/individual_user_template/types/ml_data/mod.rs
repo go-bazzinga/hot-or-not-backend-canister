@@ -10,13 +10,19 @@ use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
 use serde::Serialize;
 
-#[derive(Deserialize, Serialize, PartialEq, PartialOrd, Clone, CandidType, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Clone, CandidType, Debug)]
 pub struct WatchHistoryItem {
     pub post_id: u64,
     pub publisher_canister_id: Principal,
     pub viewed_at: SystemTime,
     pub cf_video_id: String,
     pub percentage_watched: f32,
+}
+
+impl PartialOrd for WatchHistoryItem {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for WatchHistoryItem {
@@ -43,12 +49,18 @@ impl Storable for WatchHistoryItem {
 }
 
 #[deprecated(note = "use SuccessHistoryItemV1 instead")]
-#[derive(Deserialize, Serialize, PartialEq, PartialOrd, Clone, CandidType, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Clone, CandidType, Debug)]
 pub struct SuccessHistoryItem {
     pub post_id: u64,
     pub publisher_canister_id: Principal,
     pub interacted_at: SystemTime,
     pub cf_video_id: String,
+}
+
+impl PartialOrd for SuccessHistoryItem {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for SuccessHistoryItem {
@@ -74,7 +86,7 @@ impl Storable for SuccessHistoryItem {
     };
 }
 
-#[derive(Deserialize, Serialize, PartialEq, PartialOrd, Clone, CandidType, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Clone, CandidType, Debug)]
 pub struct SuccessHistoryItemV1 {
     pub post_id: u64,
     pub publisher_canister_id: Principal,
@@ -82,6 +94,12 @@ pub struct SuccessHistoryItemV1 {
     pub cf_video_id: String,
     pub item_type: String,
     pub percentage_watched: f32,
+}
+
+impl PartialOrd for SuccessHistoryItemV1 {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for SuccessHistoryItemV1 {

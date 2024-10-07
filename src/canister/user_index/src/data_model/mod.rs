@@ -6,6 +6,7 @@ use serde::Serialize;
 use shared_utils::canister_specific::user_index::types::{
     BroadcastCallStatus, RecycleStatus, UpgradeStatus,
 };
+use shared_utils::common::participant_crypto::ProofOfParticipation;
 use shared_utils::common::types::wasm::{CanisterWasm, WasmType};
 
 use self::memory::get_wasm_memory;
@@ -38,6 +39,8 @@ pub struct CanisterData {
     pub recycle_status: RecycleStatus,
     #[serde(default)]
     pub last_broadcast_call_status: BroadcastCallStatus,
+    #[serde(default)]
+    pub proof_of_participation: Option<ProofOfParticipation>,
 }
 
 impl Default for CanisterData {
@@ -53,6 +56,7 @@ impl Default for CanisterData {
             backup_canister_pool: Default::default(),
             recycle_status: Default::default(),
             last_broadcast_call_status: Default::default(),
+            proof_of_participation: None,
         }
     }
 }

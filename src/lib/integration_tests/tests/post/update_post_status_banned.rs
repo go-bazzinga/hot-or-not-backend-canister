@@ -86,6 +86,7 @@ fn update_post_status_banned() {
         upgrade_version_number: None,
         url_to_send_canister_metrics_to: None,
         version: "1".to_string(),
+        proof_of_participation: None,
     };
     let individual_template_args_bytes = encode_one(individual_template_args).unwrap();
 

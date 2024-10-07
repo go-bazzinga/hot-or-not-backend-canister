@@ -121,6 +121,8 @@ pub fn get_initialized_env_with_provisioned_known_canisters(
             known_principal_ids: Some(known_principal_map_with_all_canisters.clone()),
             access_control_map: Some(user_index_access_control_map),
             version: String::from("v1.0.0"),
+            // V1 tests dont rely on PoP
+            proof_of_participation: None,
         })
         .unwrap(),
     );

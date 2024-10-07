@@ -19,6 +19,8 @@ const KV_STORAGE_NAMESPACE_KEY_VALUE_MEMORY: MemoryId = MemoryId::new(6);
 const WATCH_HISTORY_MEMORY: MemoryId = MemoryId::new(7);
 const SUCCESS_HISTORY_MEMORY: MemoryId = MemoryId::new(8);
 const TOKEN_LIST_MEMORY: MemoryId = MemoryId::new(9);
+const PUBKEY_CACHE_MEMORY: MemoryId = MemoryId::new(10);
+const AIRDROP_TOKEN_CHAIN_MEMORY: MemoryId = MemoryId::new(11);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -67,6 +69,14 @@ pub fn get_success_history_memory() -> Memory {
 
 pub fn get_token_list_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow_mut().get(TOKEN_LIST_MEMORY))
+}
+
+pub fn get_pubkey_cache_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(PUBKEY_CACHE_MEMORY))
+}
+
+pub fn get_airdrop_token_chain_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow_mut().get(AIRDROP_TOKEN_CHAIN_MEMORY))
 }
 
 pub fn init_memory_manager() {

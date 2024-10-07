@@ -23,6 +23,9 @@ fn init_impl(init_args: UserIndexInitArgs, data: &mut CanisterData) {
         });
     data.allow_upgrades_for_individual_canisters = true;
     data.last_run_upgrade_status.version = init_args.version;
+    if let Some(pop) = init_args.proof_of_participation {
+        data.proof_of_participation = Some(pop);
+    }
 }
 
 #[cfg(test)]
@@ -31,7 +34,7 @@ mod test {
 
     use shared_utils::{
         access_control::UserAccessRole,
-        common::types::known_principal::{KnownPrincipalMap, KnownPrincipalType},
+        common::{participant_crypto::ProofOfParticipation, types::known_principal::{KnownPrincipalMap, KnownPrincipalType}},
     };
     use test_utils::setup::test_constants::{
         get_global_super_admin_principal_id,
@@ -72,6 +75,7 @@ mod test {
             known_principal_ids: Some(known_principal_ids),
             access_control_map: Some(access_control_map),
             version: String::from("v1.0.0"),
+            proof_of_participation: None,
         };
         let mut data = CanisterData::default();
 

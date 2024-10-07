@@ -14,7 +14,7 @@ members = [
 [workspace.dependencies]
 candid = "0.10.2"
 ciborium = "0.2.1"
-pocket-ic = "3.0.0"
+pocket-ic = "5.0.0"
 ic-cdk = "0.15.1"
 ic-cdk-timers = "0.7.0"
 ic-cdk-macros = "0.16.0"

@@ -178,6 +178,12 @@ async fn upgrade_user_canister(
     version: String,
     individual_user_wasm: Vec<u8>,
 ) -> Result<(), String> {
+    // TODO: remove this after upgrade is executed on all individual canisters
+    let mut proof_of_participation = CANISTER_DATA.with_borrow(|cdata| cdata.proof_of_participation.clone());
+    if let Some(pop) = proof_of_participation {
+        proof_of_participation = Some(pop.derive_for_child(canister_id).await?);
+    }
+
     canister_management::upgrade_individual_user_canister(
         canister_id,
         CanisterInstallMode::Upgrade(None),
@@ -187,6 +193,7 @@ async fn upgrade_user_canister(
             upgrade_version_number: None,
             url_to_send_canister_metrics_to: None,
             version,
+            proof_of_participation,
         },
         individual_user_wasm,
     )

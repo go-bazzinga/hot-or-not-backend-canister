@@ -22,3 +22,6 @@ futures = { workspace = true }
 
 [dev-dependencies]
 test_utils = { workspace = true }
+
+[features]
+local = ["shared_utils/local"]

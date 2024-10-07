@@ -4,6 +4,7 @@ use ic_cdk_macros::update;
 use shared_utils::{canister_specific::individual_user_template::types::session::SessionType, common::utils::permissions::is_caller_global_admin};
 
 
+#[deprecated = "use new referral methods in individual user canister"]
 #[update(guard = "is_caller_global_admin")]
 pub async fn issue_rewards_for_referral(user_canister_id: Principal, referrer_principal: Principal, referee_principal: Principal) -> Result<String, String> {
 

@@ -456,6 +456,7 @@ fn when_bet_maker_places_bet_on_a_post_it_is_assigned_a_slot_id_and_the_outcome_
         known_principal_ids: None,
         profile_owner: None,
         url_to_send_canister_metrics_to: None,
+        proof_of_participation: None,
     };
 
     pocket_ic
