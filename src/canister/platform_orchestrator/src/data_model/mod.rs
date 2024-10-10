@@ -23,6 +23,11 @@ use self::memory::{
 
 pub mod memory;
 
+#[derive(Serialize, Deserialize, Default)]
+pub struct StateGuard {
+    pub ongoing_request_for_cycles_from_subnet_orchestrator: HashSet<Principal>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct CanisterData {
     pub all_subnet_orchestrator_canisters_list: HashSet<Principal>,
@@ -40,6 +45,8 @@ pub struct CanisterData {
     pub known_principals: PlatformOrchestratorKnownPrincipal,
     #[serde(default)]
     pub subnets_upgrade_report: SubnetUpgradeReport,
+    #[serde(default)]
+    pub state_guard: StateGuard,
 }
 
 fn _default_wasms() -> StableBTreeMap<WasmType, CanisterWasm, Memory> {
@@ -67,6 +74,7 @@ impl Default for CanisterData {
             known_principals: Default::default(),
             platform_global_admins: Default::default(),
             subnets_upgrade_report: SubnetUpgradeReport::default(),
+            state_guard: StateGuard::default(),
         }
     }
 }

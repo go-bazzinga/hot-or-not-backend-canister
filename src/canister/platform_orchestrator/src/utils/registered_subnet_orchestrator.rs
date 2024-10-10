@@ -7,6 +7,47 @@ use shared_utils::constant::SUBNET_ORCHESTRATOR_CANISTER_CYCLES_THRESHOLD;
 
 use crate::CANISTER_DATA;
 
+pub struct OngoingRequestForCyclesFromSubnetOrchestratorGuard {
+    subnet_orchestrator_canister_id: Principal,
+}
+
+impl OngoingRequestForCyclesFromSubnetOrchestratorGuard {
+    fn new(subnet_orchestrator_canister_id: Principal) -> Result<Self, String> {
+        CANISTER_DATA.with_borrow_mut(|canister_data| {
+            match canister_data
+                .state_guard
+                .ongoing_request_for_cycles_from_subnet_orchestrator
+                .contains(&subnet_orchestrator_canister_id)
+            {
+                true => Err(format!(
+                    "Already Processing a request for Cycles from subnet orchestrator {}",
+                    subnet_orchestrator_canister_id
+                )),
+                false => {
+                    canister_data
+                        .state_guard
+                        .ongoing_request_for_cycles_from_subnet_orchestrator
+                        .insert(subnet_orchestrator_canister_id);
+                    Ok(Self {
+                        subnet_orchestrator_canister_id,
+                    })
+                }
+            }
+        })
+    }
+}
+
+impl Drop for OngoingRequestForCyclesFromSubnetOrchestratorGuard {
+    fn drop(&mut self) {
+        CANISTER_DATA.with_borrow_mut(|canister_data| {
+            canister_data
+                .state_guard
+                .ongoing_request_for_cycles_from_subnet_orchestrator
+                .remove(&self.subnet_orchestrator_canister_id)
+        });
+    }
+}
+
 pub struct RegisteredSubnetOrchestrator {
     canister_id: Principal,
 }
@@ -31,6 +72,8 @@ impl RegisteredSubnetOrchestrator {
     }
 
     pub async fn deposit_cycles(&self) -> Result<(), String> {
+        let _guard = OngoingRequestForCyclesFromSubnetOrchestratorGuard::new(self.canister_id)?;
+
         let (subnet_orchestrator_status_res,) = canister_status(CanisterIdRecord {
             canister_id: self.canister_id,
         })
