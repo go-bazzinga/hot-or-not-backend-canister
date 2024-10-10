@@ -114,6 +114,9 @@ service : (PlatformOrchestratorInitArgs) -> {
       principal,
     ) -> (Result);
   upgrade_canisters_in_network : (UpgradeCanisterArg) -> (Result);
+  upgrade_individual_canisters_in_a_subnet_with_latest_wasm : (principal) -> (
+      Result_1,
+    );
   upgrade_specific_individual_canister : (principal) -> ();
   upload_wasms : (WasmType, blob) -> (Result);
   validate_platform_orchestrator_generic_function : (

@@ -24,6 +24,7 @@ mod update_canisters_last_access_time;
 mod update_profile_owner_for_individual_users;
 pub mod update_timers_for_hon_game;
 pub mod upgrade_canisters_in_network;
+mod upgrade_individual_canisters_in_a_subnet_with_latest_wasm;
 mod upgrade_specific_individual_canister;
 pub mod upload_wasms;
 
